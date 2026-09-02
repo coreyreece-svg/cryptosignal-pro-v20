@@ -51,13 +51,7 @@ export function detectCoreyPattern(
     lookbackCandles: options.lookbackCandles ?? 1000,
     distanceThreshold: options.distanceThreshold ?? 0.18,
     minMatches: options.minMatches ?? 12,
-    // NOTE: with a 1%-stop / 2%-target setup, the random-walk breakeven win
-    // rate is ~33% (stop distance / (stop + target) distance). A 70% bar
-    // was asking for more than double that baseline — essentially
-    // unreachable, which is why signals never fired. 47% is meaningfully
-    // above the ~33% baseline (positive expectancy: 0.47*2R - 0.53*1R =
-    // +0.41R average) while remaining statistically achievable.
-    minWinRate: options.minWinRate ?? 0.47,
+    minWinRate: options.minWinRate ?? 0.70,
     direction: options.direction,
   };
 
