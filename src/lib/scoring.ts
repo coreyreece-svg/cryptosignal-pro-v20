@@ -84,8 +84,30 @@ export function generateSignal(
   const emily = calculateEmilySignal(currentCandles);
 
   // --- Conviction: MAX of components, never summed ---
-  const coreyConviction = corey.isCorey ? Math.min(Math.round((corey.historicalWinRate / 100) * 15), 15) : 0;
-  const emilyConviction = emily.fires ? Math.min(Math.round((emily.score / 10) * 15), 15) : 0;
+  // Conviction is scaled relative to how far a signal clears its own
+  // minimum bar, not an absolute mapping of raw win rate. This matters
+  // because Corey's minimum win rate (47%, see corey.ts) is well below
+  // 100%, so mapping win rate directly onto a 0-15 scale would put
+  // "just barely qualified" signals below the display filter — exactly
+  // the bug that caused zero signals to ever appear. Instead: a signal
+  // at the minimum bar starts at conviction 10 (the display floor), and
+  // scales up toward 15 as it exceeds that bar, capping at a strong
+  // result (80%+ WR for Corey, max score for Emily).
+  const COREY_MIN_WR = 0.47; // must match corey.ts default minWinRate
+  const COREY_STRONG_WR = 0.80; // win rate that maps to conviction 15
+  const coreyConviction = corey.isCorey
+    ? Math.min(
+        15,
+        Math.round(
+          10 + ((corey.historicalWinRate / 100 - COREY_MIN_WR) / (COREY_STRONG_WR - COREY_MIN_WR)) * 5
+        )
+      )
+    : 0;
+
+  const EMILY_MIN_SCORE = 6; // must match emily.ts fire threshold
+  const emilyConviction = emily.fires
+    ? Math.min(15, Math.round(10 + ((emily.score - EMILY_MIN_SCORE) / (10 - EMILY_MIN_SCORE)) * 5))
+    : 0;
 
   const conviction = Math.max(coreyConviction, emilyConviction);
   const dominantType: TradeSignal['dominantType'] =
